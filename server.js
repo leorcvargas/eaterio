@@ -6,25 +6,42 @@ import createGame from './public/game.js';
 
 const app = express();
 const server = http.createServer(app);
-const io = socketio(server);
+const sockets = socketio(server);
 
 app.use(express.static('public'));
 
 const game = createGame();
-game.addFruit({ fruitId: 'fruit1', x: 1, y: 9 });
-game.addPlayer({ playerId: 'player1', x: 3, y: 0 });
-game.addPlayer({ playerId: 'player2', x: 3, y: 0 });
-game.addPlayer({ playerId: 'player3', x: 3, y: 0 });
-game.movePlayer({ playerId: 'player1', keyPressed: 'ArrowDown' });
-console.log(game.state);
+game.start();
 
-io.on('connection', socket => {
+game.subscribe(command => {
+  console.log(`Emitting ${command.type}`);
+  sockets.emit(command.type, command);
+})
+
+sockets.on('connection', socket => {
   const playerId = socket.id;
   console.log(`> Player connected on server with id: ${playerId}`);
-  
-  io.emit('setup', game.state);
-});
 
+  game.addPlayer({ playerId });
+
+  socket.emit('setup', game.state);
+
+  socket.on('disconnect', () => {
+    game.removePlayer({ playerId });
+    console.log(`> Player disconnected: ${playerId}`);
+  });
+
+  socket.on('move-player', command => {
+    console.log(`> Moving player: ${playerId}`);
+    const sanitizedCommand = {
+      ...command,
+      type: 'move-player',
+      playerId
+    };
+
+    game.movePlayer(sanitizedCommand);
+  });
+});
 
 server.listen(3000, () => {
   console.log('> Eater.io server listening on port: 3000');

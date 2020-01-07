@@ -8,20 +8,80 @@ const createGame = () => {
     }
   };
 
-  const addPlayer = ({ playerId, x, y }) => {
+  const observers = [];
+
+  const start = () => {
+    const frequencyInMS = 2000;
+    return setInterval(addFruit, frequencyInMS);
+  };
+
+  const subscribe = observerFunction => {
+    observers.push(observerFunction);
+  };
+
+  const notifyAll = (command) => {
+    for (const observerFunction of observers) {
+      observerFunction(command);
+    }
+  };
+
+  const setState = newState => {
+    Object.assign(state, newState);
+  };
+
+  const addPlayer = ({
+    playerId,
+    x = Math.floor(Math.random() * state.screen.width),
+    y = Math.floor(Math.random() * state.screen.height)
+  }) => {
     state.players[playerId] = { x, y };
+
+    notifyAll({
+      type: 'add-player',
+      playerId,
+      x,
+      y
+    });
   };
 
   const removePlayer = ({ playerId }) => {
     delete state.players[playerId];
+    notifyAll({
+      type: 'remove-player',
+      playerId,
+    });
   };
 
-  const addFruit = ({ fruitId, x, y }) => {
-    state.fruits[fruitId] = { x, y };
+  const addFruit = (command) => {
+    const fruitId = command
+      ? command.fruitId
+      : Math.floor(Math.random() * 10000000);
+    const x = command
+      ? command.x
+      : Math.floor(Math.random() * state.screen.width);
+    const y = command
+      ? command.y
+      : Math.floor(Math.random() * state.screen.height);
+
+
+    if (Object.keys(state.players)) {
+      state.fruits[fruitId] = { x, y };
+
+      notifyAll({
+        type: 'add-fruit',
+        fruitId,
+        x,
+        y
+      });
+    }
   };
 
   const removeFruit = ({ fruitId }) => {
     delete state.fruits[fruitId];
+    notifyAll({
+      type: 'remove-fruit',
+      fruitId,
+    });
   };
 
   const checkForFruitCollision = playerId => {
@@ -37,6 +97,11 @@ const createGame = () => {
   };
 
   const movePlayer = ({ playerId, keyPressed }) => {
+    notifyAll({
+      type: 'move-player',
+      playerId,
+      keyPressed,
+    });
     const player = state.players[playerId];
 
     const moves = {
@@ -76,7 +141,10 @@ const createGame = () => {
     removePlayer,
     addFruit,
     removeFruit,
-    state
+    setState,
+    state,
+    subscribe,
+    start,
   };
 };
 

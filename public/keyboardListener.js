@@ -1,7 +1,12 @@
 const createKeyboardListener = document => {
   const state = {
-    observers: []
+    observers: [],
+    playerId: null,
   };
+
+  const registerPlayerId = playerId => {
+    state.playerId = playerId;
+  }
 
   const subscribe = observerFunction => {
     state.observers.push(observerFunction);
@@ -13,12 +18,19 @@ const createKeyboardListener = document => {
     }
   };
 
-  const handleKeyDown = event =>
-    notifyAll({ playerId: "player1", keyPressed: event.key });
+  const handleKeyDown = event => {
+    const command = {
+      type: 'move-player',
+      playerId: state.playerId,
+      keyPressed: event.key
+    }
+    notifyAll(command);
+  }
 
   document.addEventListener("keydown", handleKeyDown);
 
   return {
+    registerPlayerId,
     subscribe
   };
 };
