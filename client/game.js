@@ -1,41 +1,11 @@
-const currentPlayerId = "player1";
-const screen = document.getElementById("screen");
-const context = screen.getContext("2d");
-
-const renderPlayer = (context, { x, y }) => {
-  const color = "gray";
-
-  context.fillStyle = color;
-  context.fillRect(x, y, 1, 1);
-};
-
-const renderFruit = (context, { x, y }) => {
-  const color = "red";
-
-  context.fillStyle = color;
-  context.fillRect(x, y, 1, 1);
-};
-
-const render = (context, state) => {
-  context.clearRect(0, 0, 500, 500);
-
-  for (const playerId in state.players) {
-    const player = state.players[playerId];
-    renderPlayer(context, player);
-  }
-
-  for (const fruitId in state.fruits) {
-    const fruit = state.fruits[fruitId];
-    renderFruit(context, fruit);
-  }
-
-  requestAnimationFrame(() => render(context, state));
-};
-
 const createGame = () => {
   const state = {
     players: {},
-    fruits: {}
+    fruits: {},
+    screen: {
+      width: 10,
+      height: 10
+    }
   };
 
   const addPlayer = ({ playerId, x, y }) => {
@@ -76,7 +46,7 @@ const createGame = () => {
         }
       },
       ArrowDown: () => {
-        if (player.y + 1 < screen.height) {
+        if (player.y + 1 < state.screen.height) {
           player.y += 1;
         }
       },
@@ -86,7 +56,7 @@ const createGame = () => {
         }
       },
       ArrowRight: () => {
-        if (player.x + 1 < screen.width) {
+        if (player.x + 1 < state.screen.width) {
           player.x += 1;
         }
       }
@@ -110,33 +80,4 @@ const createGame = () => {
   };
 };
 
-const createKeyboardListener = () => {
-  const state = {
-    observers: []
-  };
-
-  const subscribe = observerFunction => {
-    state.observers.push(observerFunction);
-  };
-
-  const notifyAll = command => {
-    for (const observerFunction of state.observers) {
-      observerFunction(command);
-    }
-  };
-
-  const handleKeyDown = event =>
-    notifyAll({ playerId: "player1", keyPressed: event.key });
-
-  document.addEventListener("keydown", handleKeyDown);
-
-  return {
-    subscribe
-  };
-};
-
-const game = createGame();
-const keyboardListener = createKeyboardListener();
-keyboardListener.subscribe(game.movePlayer);
-
-render(context, game.state);
+export default createGame;
